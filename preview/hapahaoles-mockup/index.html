@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>HapaHaole's Hawaiian Street Tacos (new layout demo) · My Aloha Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Nunito:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* Demo of the expanded MAM listing. Desktop = header + two columns (answers left, contact rail right).
+   Phone (container query, so "Phone view" can force it) = compact header, swipe strip, sticky tabs, sticky action bar. */
+:root{
+  /* light only (Kaj, 2026-11-10): white background, black body text, purple section headings and accents */
+  --purple:#7A2FE0;--ink:#111111;--head:#000000;--muted:#4B4B55;
+  --bg:#ffffff;--soft:#F7F5FD;--line:#E6E1F2;--card:#ffffff;--glass:rgba(255,255,255,.96);--frame:#E7E3F2;
+  --ask-bg:#FFF4EA;--ask-fg:#9A4A0C;--web-bg:#E8F1FF;--web-fg:#1F4FB8;--own-bg:#E4F7F3;--own-fg:#0B6F64;--ig-bg:#FCE8F3;--ig-fg:#A3236A;
+  --diet-bg:#EAF7EC;--diet-fg:#256B33;
+  --fh:"Poppins",system-ui,-apple-system,sans-serif;--fb:"Nunito",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{background:#ffffff}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:15px;line-height:1.6;margin:0}
+.outer{padding-block:20px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--fh);color:var(--head);letter-spacing:-.02em;line-height:1.2;margin:0;text-wrap:balance}
+.sec h2,.mgroup h3,.two h3{color:var(--purple)}
+.g .v{color:var(--purple)!important}
+a{color:var(--purple)}
+button{font:inherit}
+button:focus-visible,a:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+
+.note{max-width:1100px;margin:0 auto 18px;background:var(--soft);border:1px dashed var(--line);border-radius:14px;padding:12px 16px;font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.note b{color:var(--head)}
+.legend,.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tools{margin-left:auto}
+.toggle{font:600 13px var(--fh);border:2px solid var(--line);background:var(--card);color:var(--head);border-radius:999px;padding:6px 14px;cursor:pointer}
+.toggle[aria-pressed="true"]{border-color:var(--purple);color:var(--purple)}
+
+.wrap{container-type:inline-size;max-width:1100px;margin:0 auto 60px;background:var(--bg)}
+body.phone .wrap{max-width:400px;border:10px solid var(--frame);border-radius:38px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(22,30,38,.45)}
+
+.src{display:inline-block;font:700 10.5px var(--fh);letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:1px 7px;vertical-align:2px;white-space:nowrap}
+.s-web{background:var(--web-bg);color:var(--web-fg)}.s-own{background:var(--own-bg);color:var(--own-fg)}.s-ig{background:var(--ig-bg);color:var(--ig-fg)}.s-ask{background:var(--ask-bg);color:var(--ask-fg)}
+.ask{color:var(--ask-fg);background:var(--ask-bg);border-radius:6px;padding:0 6px;font-weight:700;font-size:13.5px}
+body.public .wrap .src,body.public .ask,body.public .askonly{display:none}
+
+.hero{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--card)}
+.cover{height:190px;background:#2b1d10 center/cover no-repeat;position:relative}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(0,0,0,.35))}
+.hbody{padding:0 22px 22px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 18px;align-items:end}
+.logo{width:92px;height:92px;border-radius:20px;background:#fff center/cover no-repeat;border:4px solid var(--card);margin-top:-46px;position:relative;z-index:1;box-shadow:0 10px 30px -12px rgba(22,30,38,.45);display:grid;place-items:center;font-size:40px}
+.hbody h1{font-size:clamp(1.4rem,3.4vw,2.1rem);padding-top:12px}
+.sub{grid-column:1/-1;color:var(--muted);margin-top:4px}
+.chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font:600 12.5px var(--fh);border:1px solid var(--line);border-radius:999px;padding:4px 11px;color:var(--head);background:var(--soft);white-space:nowrap}
+.chip.live{background:#9048F0;color:#fff;border-color:transparent}
+.chip.d{background:var(--diet-bg);color:var(--diet-fg);border-color:transparent}
+.ctas{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{font:700 14px var(--fh);border-radius:999px;padding:10px 18px;border:2px solid var(--line);color:var(--head);text-decoration:none;background:var(--card);text-align:center}
+.btn.p{background:#9048F0;border-color:#9048F0;color:#fff}
+
+.glance{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.g{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--card);min-width:0}
+.g.hot{border-color:#9048F0;box-shadow:0 0 0 3px rgba(144,72,240,.12)}
+.g .k{font:700 11px var(--fh);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.g .v{font:700 15px var(--fh);color:var(--head);margin:4px 0 2px}
+.g .d{font-size:13px;color:var(--muted)}
+
+.tabs{display:none}
+.body{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start}
+.main{display:grid;gap:16px;min-width:0}
+.sec{border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--card);min-width:0}
+.sec h2{font-size:1.15rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec p{margin:0 0 10px}
+.sec p:last-child{margin-bottom:0}
+.quote{border-left:3px solid #9048F0;padding-left:12px;font-style:italic;color:var(--head)}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 14px;margin:0}
+.kv.narrow{grid-template-columns:76px minmax(0,1fr)}
+.kv dt{font:700 13px var(--fh);color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+
+.stopsmap{height:240px;border-radius:14px;border:1px solid var(--line);margin-bottom:12px;z-index:0}
+.stops{display:grid;gap:8px}
+.stop{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:inherit;width:100%}
+.stop:hover{border-color:#9048F0}
+.stop .n{width:26px;height:26px;border-radius:50%;background:#9048F0;color:#fff;display:grid;place-items:center;font:700 13px var(--fh)}
+.stop b{font-family:var(--fh);color:var(--head);font-size:14px;display:block}
+.stop small{color:var(--muted);font-size:13px}
+.stop .when{font:700 13px var(--fh);color:var(--head);text-align:right;white-space:nowrap}
+.stop .when span{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.privnote{font-size:13px;color:var(--muted);margin-top:8px}
+.pin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#9048F0;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:grid;place-items:center}
+.pin i{transform:rotate(45deg);color:#fff;font:700 12px var(--fh);font-style:normal}
+
+.dfilter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dfilter button{font:700 12.5px var(--fh);border:1px solid var(--line);background:var(--soft);color:var(--head);border-radius:999px;padding:5px 12px;cursor:pointer}
+.dfilter button[aria-pressed="true"]{background:var(--diet-bg);color:var(--diet-fg);border-color:transparent}
+.mgroup h3{font-size:.8rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.mgroup:first-of-type h3{margin-top:0}
+.mi{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.mi:last-child{border-bottom:0}
+.mi .nm{font:700 14.5px var(--fh);color:var(--head)}
+.mi .pr{font:700 14px var(--fh);color:var(--head);font-variant-numeric:tabular-nums}
+.mi .ds{grid-column:1/-1;color:var(--muted);font-size:13.5px}
+.dt{display:inline-block;font:700 10px var(--fh);background:var(--diet-bg);color:var(--diet-fg);border-radius:5px;padding:0 5px;margin-left:4px;vertical-align:2px}
+.mi.hidden{display:none}
+.mnote{font-size:13px;color:var(--muted);margin-top:10px}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border-radius:8px;padding:3px 10px;font-size:13.5px;background:var(--soft);border:1px solid var(--line)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two h3{font-size:.95rem;margin-bottom:6px}
+ul.clean{margin:0;padding-left:18px}
+.faq details{border-top:1px solid var(--line);padding:10px 0}
+.faq details:first-of-type{border-top:0;padding-top:0}
+.faq summary{font:700 14.5px var(--fh);color:var(--head);cursor:pointer}
+.faq details p{margin:6px 0 0}
+.rail{position:sticky;top:16px;display:grid;gap:14px}
+.rail .sec{padding:18px}
+.callout{background:var(--soft);border-radius:14px;padding:14px;font-size:13.5px}
+.callout b{color:var(--head)}
+.actionbar{display:none}
+
+@container (max-width:600px){
+  .hero{border-radius:0;border:0;border-bottom:1px solid var(--line)}
+  .cover{height:120px}
+  .hbody{padding:0 16px 14px;gap:4px 12px}
+  .logo{width:64px;height:64px;margin-top:-32px;border-radius:16px;font-size:28px}
+  .hbody h1{font-size:1.25rem;padding-top:8px}
+  .sub{font-size:13.5px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-16px;padding-right:16px}
+  .chips::-webkit-scrollbar{display:none}
+  .ctas{display:none}
+  .glance{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:12px 0 0;padding:0 16px 4px;scrollbar-width:none}
+  .glance::-webkit-scrollbar{display:none}
+  .g{flex:0 0 62%;scroll-snap-align:start;padding:12px}
+  .tabs{display:flex;position:sticky;top:env(safe-area-inset-top,0px);z-index:500;background:var(--glass);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-top:12px;padding:0 6px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:1 0 auto;background:none;border:0;border-bottom:3px solid transparent;padding:12px 9px 9px;font:700 13.5px var(--fh);color:var(--muted);cursor:pointer}
+  .tabs button[aria-selected="true"]{color:var(--head);border-bottom-color:#9048F0}
+  .body{display:block;padding:12px 16px 0}
+  .main,.rail{display:grid;gap:12px;position:static}
+  .rail{margin-top:12px}
+  .sec,.rail .sec{padding:16px;border-radius:16px}
+  .sec h2{font-size:1.02rem}
+  .m-off{display:none}
+  .main:not(:has(> :not(.m-off))){display:none}
+  .rail:not(:has(> :not(.m-off))){display:none;margin-top:0}
+  .two{grid-template-columns:1fr}
+  .kv,.kv.narrow{grid-template-columns:1fr;gap:0}
+  .kv dd{margin-bottom:10px}
+  .stopsmap{height:200px}
+  .actionbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;position:sticky;bottom:0;z-index:600;background:var(--glass);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));margin-top:16px}
+  .actionbar a,.actionbar button{display:grid;justify-items:center;gap:2px;background:none;border:0;color:var(--head);text-decoration:none;font:700 11.5px var(--fh);padding:6px 0;border-radius:12px;cursor:pointer}
+  .actionbar .ic{font-size:18px;line-height:1}
+  .actionbar .p{background:#9048F0;color:#fff}
+}
+</style>
+</head><body>
+<div class="outer">
+  <div class="note">
+    <b>Layout demo:</b> HapaHaole's with the expanded listing. Everything shown came from their website and Instagram (Nov 2026). The orange Ask labels are what the onboarding call would fill in.
+    <span class="legend"><span class="src s-web">Website</span><span class="src s-ig">Instagram</span><span class="src s-own">Owner</span><span class="src s-ask">Ask on call</span></span>
+    <span class="tools">
+      <button class="toggle" id="phoneBtn" type="button" aria-pressed="false">Phone view</button>
+      <button class="toggle" id="srcBtn" type="button" aria-pressed="false">Public view</button>
+    </span>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="cover" style="background-image:url('../../photos/hapahaoles-1200.webp')"></div>
+      <div class="hbody">
+        <div class="logo" aria-hidden="true">🌮</div>
+        <h1>HapaHaole's Hawaiian Street Tacos</h1>
+        <div class="sub">Food truck · Flavors they grew up with on Maui, served hapa style · Owner Gabe Harvey</div>
+        <div class="chips">
+          <span class="chip live">Out today 4 to 8 PM</span>
+          <span class="chip">Food truck</span>
+          <span class="chip">Catering</span>
+          <span class="chip d">Vegan options</span>
+          <span class="chip d">Gluten-free options</span>
+          <span class="chip">Online ordering</span>
+          <span class="chip">5 years on 11/17</span>
+        </div>
+        <div class="ctas">
+          <a class="btn p" href="https://order.toasttab.com/online/hapahaoleshst" target="_blank" rel="noopener">Order online</a>
+          <a class="btn" href="https://hapahaoles.com/catering" target="_blank" rel="noopener">Book catering</a>
+          <span class="btn">(702) 604-6222</span>
+          <a class="btn" href="https://www.instagram.com/hapahaoles_hst/" target="_blank" rel="noopener">Instagram</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="glance">
+      <div class="g hot"><div class="k">Next stop</div><div class="v">Today, 4 to 8 PM</div><div class="d">Taco Tuesday at Khoury's, 9915 S Eastern Ave <span class="src s-ig">IG</span></div></div>
+      <div class="g"><div class="k">Prices</div><div class="v">Tacos $5 · Plates $14 to $22</div><div class="d">The Works: 3 tacos, corn and churro bites <span class="src s-web">Web</span></div></div>
+      <div class="g"><div class="k">Known for</div><div class="v">Kalua Pig &amp; Bulgogi tacos</div><div class="d">Plus Ube Mochi Churro Bites <span class="src s-web">Web</span></div></div>
+      <div class="g"><div class="k">Catering</div><div class="v">Truck or buffet</div><div class="d">Weddings, schools, corporate <span class="src s-web">Web</span></div></div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Listing sections">
+      <button role="tab" data-t="find" aria-selected="true">Find them</button>
+      <button role="tab" data-t="menu" aria-selected="false">Menu</button>
+      <button role="tab" data-t="catering" aria-selected="false">Catering</button>
+      <button role="tab" data-t="about" aria-selected="false">About</button>
+      <button role="tab" data-t="contact" aria-selected="false">Contact</button>
+    </div>
+
+    <div class="body">
+      <div class="main">
+        <section class="sec" data-tab="find">
+          <h2>Find them next <span class="src s-ig">Instagram, updated weekly</span></h2>
+          <div id="stopsMap" class="stopsmap"></div>
+          <div class="stops" id="stopList"></div>
+          <p class="privnote">Wednesday and Thursday this week are private events. The weekly schedule goes up on Instagram every Sunday night or Monday.</p>
+        </section>
+
+        <section class="sec" data-tab="find">
+          <h2>Happening now <span class="src s-ig">Instagram</span></h2>
+          <p><b>Toy drive with Mongo's Hood, Nov 5 to Dec 5.</b> Bring a new, unwrapped toy, craft, book or game to any of their weekly stops. Each gift gets a raffle entry, and prizes include a free private party for up to 20 people.</p>
+          <p><b>5 Years of Tacos &amp; Aloha</b>, Tuesday Nov 17, 4 to 8 PM at Khoury's.</p>
+          <p><b>Back for now:</b> the Kalua Pig Currito and Tan Tan Men. They also bring Bulgogi Potstickers to Food Truck Mania at Craft Haus.</p>
+        </section>
+
+        <section class="sec" data-tab="menu">
+          <h2>Menu <span class="src s-web">Website</span></h2>
+          <div class="dfilter" id="dfilter" aria-label="Dietary filter">
+            <button type="button" data-d="" aria-pressed="true">All</button>
+            <button type="button" data-d="V" aria-pressed="false">Vegetarian</button>
+            <button type="button" data-d="VG" aria-pressed="false">Vegan</button>
+            <button type="button" data-d="GF" aria-pressed="false">Gluten-free</button>
+            <button type="button" data-d="DF" aria-pressed="false">Dairy-free</button>
+          </div>
+          <div id="menu"></div>
+          <p class="mnote">Every taco is finished with garlic aioli, furikake and micro cilantro. Single tacos are add-ons only. The menu can change by location and event. Katsu items take 10+ minutes.</p>
+          <p class="askonly"><span class="ask">Ask: kids' options? spice level? peanut, shellfish or shared fryer warnings?</span></p>
+        </section>
+
+        <section class="sec" data-tab="catering">
+          <h2>Catering and private events <span class="src s-web">Website</span></h2>
+          <p>From small gatherings to large events, they bring the truck or set up a buffet.</p>
+          <div class="tags" style="margin-bottom:12px">
+            <span class="tag">Weddings</span><span class="tag">Corporate events</span><span class="tag">School events</span>
+            <span class="tag">Festivals</span><span class="tag">Private parties</span><span class="tag">Car shows</span>
+          </div>
+          <dl class="kv">
+            <dt>Service styles</dt><dd>Food truck or buffet <span class="src s-web">Web</span></dd>
+            <dt>Dietary</dt><dd>Vegetarian, vegan, gluten-free and dairy-free options <span class="src s-web">Web</span></dd>
+            <dt>Travels</dt><dd>All over the valley and Pahrump. They've taken the truck to San Diego, Irvine, Monterey and Arizona <span class="src s-web">Web</span></dd>
+            <dt>Minimum</dt><dd><span class="ask">Ask: minimum guests or spend</span></dd>
+            <dt>Price</dt><dd><span class="ask">Ask: per-person range for truck vs buffet</span></dd>
+            <dt>Notice</dt><dd><span class="ask">Ask: how far ahead to book</span></dd>
+            <dt>Travel fee</dt><dd><span class="ask">Ask</span></dd>
+            <dt>Deposit</dt><dd><span class="ask">Ask</span></dd>
+          </dl>
+          <p style="margin-top:14px"><a class="btn p" href="https://hapahaoles.com/catering" target="_blank" rel="noopener" style="display:inline-block">Send a catering request</a></p>
+        </section>
+
+        <section class="sec" data-tab="about">
+          <h2>Their story <span class="src s-web">Website</span></h2>
+          <p>Gabe and his family are born and raised on Maui, where food was always a mix of cultures. Gabe took those flavors (huli huli chicken, bulgogi beef, kalua pig) and put them in a taco shell.</p>
+          <p>It started with their son MaCallan. They homeschooled him to be true to himself, and one day he told Gabe: "Dad, you always talked about starting a food truck or restaurant." So he did.</p>
+          <p>It began with Taco Tuesdays and grew into festivals, car shows, schools, weddings and big events. Friends became crew, and crew became family.</p>
+          <p class="quote">"We feed everyone the same way. We're not trying to manufacture a brand. We're just being ourselves."</p>
+          <p class="askonly"><span class="ask">Ask: Gabe's family roots, okay to say on the listing? Year the truck started?</span></p>
+        </section>
+
+        <section class="sec" data-tab="about">
+          <h2>Good to know</h2>
+          <dl class="kv">
+            <dt>Seating</dt><dd>Depends on the venue, it's a truck <span class="src s-web">Web</span></dd>
+            <dt>Order ahead</dt><dd>Online through Toast <span class="src s-web">Web</span></dd>
+            <dt>Payment</dt><dd><span class="ask">Ask: cash, card, Apple Pay?</span></dd>
+            <dt>Kid-friendly</dt><dd><span class="ask">Ask</span></dd>
+            <dt>Pets</dt><dd><span class="ask">Ask: depends on the venue?</span></dd>
+            <dt>Wait time</dt><dd><span class="ask">Ask: typical wait at Taco Tuesday</span></dd>
+            <dt>Gift cards</dt><dd><span class="ask">Ask</span></dd>
+          </dl>
+        </section>
+
+        <section class="sec faq" data-tab="about">
+          <h2>Questions people ask</h2>
+          <details open><summary>Where is HapaHaole's this week?</summary><p>Tuesday 4 to 8 PM at Khoury's Fine Wine &amp; Spirits (9915 S Eastern Ave), Friday at Pacific Dental (11 AM to 2 PM) and Lavante Community (4:30 to 7:30 PM), and Saturday at Discount Firearms &amp; Ammo (11 AM to 2 PM).</p></details>
+          <details><summary>Do they have vegan or gluten-free food?</summary><p>Yes. The Ban Chan Potato taco is vegan, and the Bulgogi Beef taco, HAPA Corn, Elote Tots and Ube Mochi Churro Bites are gluten-free.</p></details>
+          <details><summary>Can I hire the truck for a party?</summary><p>Yes, for weddings, schools, corporate events and private parties, as a truck or buffet. Send a request on their catering page.</p></details>
+          <details><summary>Is there seating?</summary><p>It depends on where they're parked that day.</p></details>
+        </section>
+      </div>
+
+      <aside class="rail">
+        <div class="sec" data-tab="contact">
+          <h2>Contact</h2>
+          <dl class="kv narrow">
+            <dt>Phone</dt><dd>(702) 604-6222 <span class="src s-web">Web</span> <span class="ask">Text too?</span></dd>
+            <dt>Order</dt><dd><a href="https://order.toasttab.com/online/hapahaoleshst" target="_blank" rel="noopener">Toast online ordering</a></dd>
+            <dt>Website</dt><dd><a href="https://hapahaoles.com/" target="_blank" rel="noopener">hapahaoles.com</a></dd>
+            <dt>Social</dt><dd><a href="https://www.instagram.com/hapahaoles_hst/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/hapahaoles" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.tiktok.com/@hapahaoleshstlv" target="_blank" rel="noopener">TikTok</a> · <a href="https://www.yelp.com/biz/gjN-sw45Aj3XaM2jmVvoNQ" target="_blank" rel="noopener">Yelp</a></dd>
+            <dt>Email</dt><dd><span class="ask">Ask</span></dd>
+          </dl>
+        </div>
+        <div class="sec" data-tab="contact">
+          <h2>Where they go</h2>
+          <p style="margin:0">All over the Las Vegas valley, plus Pahrump festivals. No fixed address, so check the schedule above.</p>
+          <p class="askonly" style="margin-top:8px"><span class="ask">Ask: their usual parts of town for private bookings</span></p>
+        </div>
+        <div class="callout" data-tab="contact"><b>Owner?</b> This listing is free. Book a 45-minute call to check it and get Verified.</div>
+      </aside>
+    </div>
+
+    <nav class="actionbar" aria-label="Quick actions">
+      <a class="p" href="https://order.toasttab.com/online/hapahaoleshst" target="_blank" rel="noopener"><span class="ic">🛍️</span>Order</a>
+      <button type="button" data-go="find"><span class="ic">📍</span>Find</button>
+      <a href="https://hapahaoles.com/catering" target="_blank" rel="noopener"><span class="ic">🎉</span>Catering</a>
+      <button type="button" data-go="contact"><span class="ic">📞</span>Contact</button>
+    </nav>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const STOPS=[
+ {d:"Tue 11/10",t:"4 to 8 PM",v:"Taco Tuesday at Khoury's Fine Wine & Spirits",a:"9915 S Eastern Ave",ll:[36.009249,-115.118275],today:1},
+ {d:"Fri 11/13",t:"11 AM to 2 PM",v:"Pacific Dental",a:"2460 Paseo Verde Pkwy",ll:[36.01948,-115.096662]},
+ {d:"Fri 11/13",t:"4:30 to 7:30 PM",v:"Lavante Community",a:"7618 N Decatur Blvd",ll:[36.300902,-115.207183]},
+ {d:"Sat 11/14",t:"11 AM to 2 PM",v:"Discount Firearms & Ammo",a:"3084 S Highland Dr",ll:[36.133807,-115.174834]},
+ {d:"Tue 11/17",t:"4 to 8 PM",v:"5 Years of Tacos & Aloha at Khoury's",a:"9915 S Eastern Ave, Unit 110",ll:[36.009249,-115.118275]}];
+const MENU=[
+ ["Hapa plates",[["2 Tacos + HAPA Corn",14,"Choice of 2 tacos plus HAPA Corn",""],["3 Tacos",15,"Choice of 3 tacos",""],["The Works",22,"3 tacos, HAPA Corn and Ube Mochi Churro Bites",""],["Aloha Bowl",15,"Choice of protein, garlic fried rice, HAPA mac salad or corn, kimchi",""],["HAPA Salad",16,"Crunchy tortilla shell, choice of protein, romaine, black beans, olives, avocado, pico, corn, house dressing",""]]],
+ ["Tacos",[["Huli Chicken",5,"Hawaiian rotisserie chicken, Asian slaw, chicken crunch","DF"],["Bulgogi Beef",5,"Korean BBQ beef, kimchi, HAPA pickled vegetables, jalapeño","DF GF"],["Kalua Pig",5,"Kalua pork, Asian slaw, pico de gallo, mac salad, crispy shallots",""],["Miso Mushroom",5,"Sake miso roasted mushrooms, Asian slaw, crispy shallots","DF V"],["Ban Chan Potato",5,"Fried potatoes, garlic soy aioli, kimchi, crispy shallots","DF VG V"],["Miso Butterfish",6,"Miso Alaskan cod, green papaya, pico de gallo, crispy shallots","DF"],["Chicken Katsu Tacos (2)",10,"Panko chicken, Asian slaw, katsu sauce, red ginger","DF"]]],
+ ["Hapa eats",[["Chicken Skin Nachos",16,"Fried chicken skin, huli chicken, Asian slaw, pico, garlic aioli, cotija",""],["Bulgogi Cheesesteak",13,"Hawaiian sweet roll, bulgogi beef, American cheese, kimchi, garlic aioli, jalapeño",""],["Chicken Katsu & Tots",12,"Panko chicken, HAPA-seasoned tater tots",""],["Elote Tots",10,"Tots, HAPA Corn, cotija, chili oil, furikake","GF V"],["Asian Tots",7,"Tots, HAPA-Q sauce, garlic aioli, red ginger, cotija",""],["HAPAdilla",9,"Griddled flour tortilla, Chihuahua cheese","V"],["Bulgogi Potstickers",7,"Beef gyoza, HAPA-Q sauce, red ginger, furikake","DF"],["Spam Slider",5,"Hawaiian sweet roll, Spam, kimchi, quail egg, garlic aioli, crispy shallots",""],["Chips & Salsa",5,"Furikake tortilla chips, cotija, spicy salsa","GF"],["HAPA Corn",5,"Spiced sweet corn, garlic aioli, cotija, furikake","GF V"]]],
+ ["Sweets",[["Ube Mochi Churro Bites",6,"Fried ube mochi, cinnamon sugar, chocolate, powdered sugar","GF DF V"]]]];
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+document.getElementById('menu').innerHTML=MENU.map(([g,items])=>`<div class="mgroup"><h3>${g}</h3>`+items.map(([n,p,d,tags])=>`<div class="mi" data-tags="${tags}"><div class="nm">${esc(n)}${tags.split(' ').filter(Boolean).map(t=>`<span class="dt">${t}</span>`).join('')}</div><div class="pr">$${p}</div><div class="ds">${esc(d)}</div></div>`).join('')+'</div>').join('');
+document.getElementById('dfilter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#dfilter button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  document.querySelectorAll('.mi').forEach(m=>m.classList.toggle('hidden',!!b.dataset.d&&!m.dataset.tags.split(' ').includes(b.dataset.d)));
+  document.querySelectorAll('.mgroup').forEach(g=>g.hidden=!g.querySelector('.mi:not(.hidden)'))});
+
+let map,markers=[];
+document.getElementById('stopList').innerHTML=STOPS.map((s,i)=>`<button type="button" class="stop" data-i="${i}"><span class="n">${i+1}</span><span><b>${esc(s.v)}</b><small>${esc(s.a)}</small></span><span class="when">${s.today?'Today':s.d}<span>${s.t}</span></span></button>`).join('');
+function drawMap(){
+  if(map||!window.L)return;
+  map=L.map('stopsMap',{scrollWheelZoom:false});
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19}).addTo(map);
+  const seen={};
+  STOPS.forEach((s,i)=>{const k=s.ll.join();const off=seen[k]?0.0012*seen[k]:0;seen[k]=(seen[k]||0)+1;
+    const m=L.marker([s.ll[0]+off,s.ll[1]],{icon:L.divIcon({className:'',html:`<div class="pin"><i>${i+1}</i></div>`,iconSize:[26,26],iconAnchor:[13,26]})}).addTo(map)
+      .bindPopup(`<b>${esc(s.v)}</b><br>${s.today?'Today':s.d}, ${s.t}<br>${esc(s.a)}<br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.a+', Las Vegas, NV')}">Directions</a>`);
+    markers.push(m)});
+  map.fitBounds(L.latLngBounds(STOPS.map(s=>s.ll)).pad(0.15),{maxZoom:14});
+}
+document.getElementById('stopList').addEventListener('click',e=>{const b=e.target.closest('.stop');if(!b||!map)return;const m=markers[+b.dataset.i];map.setView(m.getLatLng(),14);m.openPopup();document.getElementById('stopsMap').scrollIntoView({behavior:'smooth',block:'center'})});
+
+const tabs=[...document.querySelectorAll('.tabs [data-t]')];
+function show(t){
+  tabs.forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  document.querySelectorAll('.wrap [data-tab]').forEach(s=>s.classList.toggle('m-off',s.dataset.tab!==t));
+  if(map)setTimeout(()=>map.invalidateSize(),50);
+}
+tabs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.t)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.go);document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})}));
+show('find');
+function flip(id,cls){const b=document.getElementById(id);b.addEventListener('click',()=>{const on=document.body.classList.toggle(cls);b.setAttribute('aria-pressed',on);if(map)setTimeout(()=>map.invalidateSize(),60)})}
+flip('phoneBtn','phone');flip('srcBtn','public');
+drawMap();
+</script>
+</body></html>

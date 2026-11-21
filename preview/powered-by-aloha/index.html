@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>Powered by ALOHA (mockup) · My Aloha Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: the live MAM listing page. Desktop = header card + two columns (answers left, sticky contact rail right).
+   Phone (container query, so the "Phone view" button can force it) = compact header, swipeable at-a-glance strip,
+   sticky tabs that show one group at a time, and a sticky action bar at the bottom. */
+:root{
+  --purple:#9048F0;--purple-dk:#6E28D9;--ink:#2E3A48;--head:#161E26;--muted:#6B7280;
+  --bg:#ffffff;--soft:#F7F5FD;--line:#ECE9F5;--card:#ffffff;--glass:rgba(255,255,255,.94);--frame:#E7E3F2;
+  --ask-bg:#FFF4EA;--ask-fg:#9A4A0C;--web-bg:#E8F1FF;--web-fg:#1F4FB8;--own-bg:#E4F7F3;--own-fg:#0B6F64;--g-bg:#F1ECFB;--g-fg:#5B2BB0;
+  --fh:"Poppins",system-ui,-apple-system,sans-serif;--fb:"Nunito",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#D5DAE3;--head:#F4F2FA;--muted:#9AA3B2;--bg:#12161D;--soft:#1A1F29;--line:#2A2F3D;--card:#171C25;--glass:rgba(23,28,37,.94);--frame:#0B0E13;
+  --purple:#A874F5;--purple-dk:#9048F0;--ask-bg:#3A2614;--ask-fg:#FFC08A;
+  --web-bg:#16284A;--web-fg:#9CC0FF;--own-bg:#123A35;--own-fg:#7FE3D4;--g-bg:#2A1F45;--g-fg:#CDB5FF;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ink:#D5DAE3;--head:#F4F2FA;--muted:#9AA3B2;--bg:#12161D;--soft:#1A1F29;--line:#2A2F3D;--card:#171C25;--glass:rgba(23,28,37,.94);--frame:#0B0E13;
+  --purple:#A874F5;--purple-dk:#9048F0;--ask-bg:#3A2614;--ask-fg:#FFC08A;
+  --web-bg:#16284A;--web-fg:#9CC0FF;--own-bg:#123A35;--own-fg:#7FE3D4;--g-bg:#2A1F45;--g-fg:#CDB5FF;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:15px;line-height:1.6;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.outer{padding-block:20px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--fh);color:var(--head);letter-spacing:-.02em;line-height:1.2;margin:0;text-wrap:balance}
+a{color:var(--purple)}
+button{font:inherit}
+button:focus-visible,a:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+
+.note{max-width:1100px;margin:0 auto 18px;background:var(--soft);border:1px dashed var(--line);border-radius:14px;padding:12px 16px;font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.note b{color:var(--head)}
+.legend,.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tools{margin-left:auto}
+.toggle{font:600 13px var(--fh);border:2px solid var(--line);background:var(--card);color:var(--head);border-radius:999px;padding:6px 14px;cursor:pointer}
+.toggle[aria-pressed="true"]{border-color:var(--purple);color:var(--purple)}
+
+/* the page itself; becomes a phone-sized frame in Phone view */
+.wrap{container-type:inline-size;max-width:1100px;margin:0 auto 60px;background:var(--bg)}
+body.phone .wrap{max-width:400px;border:10px solid var(--frame);border-radius:38px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(22,30,38,.45)}
+.page{padding-bottom:0}
+
+.src{display:inline-block;font:700 10.5px var(--fh);letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:1px 7px;vertical-align:2px;white-space:nowrap}
+.s-web{background:var(--web-bg);color:var(--web-fg)}.s-own{background:var(--own-bg);color:var(--own-fg)}.s-g{background:var(--g-bg);color:var(--g-fg)}.s-ask{background:var(--ask-bg);color:var(--ask-fg)}
+.ask{color:var(--ask-fg);background:var(--ask-bg);border-radius:6px;padding:0 6px;font-weight:700;font-size:13.5px}
+body.public .wrap .src,body.public .ask,body.public .askrow,body.public .askonly{display:none}
+
+.hero{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--card)}
+.cover{height:150px;background:linear-gradient(120deg,#6E28D9,#9048F0 55%,#2F6BE6);position:relative}
+.cover span{position:absolute;right:16px;bottom:12px;color:#fff;opacity:.85;font:600 12px var(--fh)}
+.hbody{padding:0 22px 22px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 18px;align-items:end}
+.logo{width:92px;height:92px;border-radius:20px;background:#fff;border:4px solid var(--card);margin-top:-46px;display:grid;place-items:center;box-shadow:0 10px 30px -12px rgba(110,40,217,.45);font:800 28px var(--fh);color:#9048F0}
+.hbody h1{font-size:clamp(1.4rem,3.4vw,2.1rem);padding-top:12px}
+.sub{grid-column:1/-1;color:var(--muted);margin-top:4px}
+.chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font:600 12.5px var(--fh);border:1px solid var(--line);border-radius:999px;padding:4px 11px;color:var(--head);background:var(--soft);white-space:nowrap}
+.chip.v{background:var(--own-bg);color:var(--own-fg);border-color:transparent}
+.ctas{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{font:700 14px var(--fh);border-radius:999px;padding:10px 18px;border:2px solid var(--line);color:var(--head);text-decoration:none;background:var(--card);text-align:center}
+.btn.p{background:#9048F0;border-color:#9048F0;color:#fff}
+
+.glance{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.g{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--card);min-width:0}
+.g .k{font:700 11px var(--fh);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.g .v{font:700 15px var(--fh);color:var(--head);margin:4px 0 2px}
+.g .d{font-size:13px;color:var(--muted)}
+
+.tabs{display:none}
+.body{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start}
+.main{display:grid;gap:16px;min-width:0}
+.sec{border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--card);min-width:0}
+.sec h2{font-size:1.15rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec p{margin:0 0 10px}
+.sec p:last-child{margin-bottom:0}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 14px;margin:0}
+.kv.narrow{grid-template-columns:70px minmax(0,1fr)}
+.kv dt{font:700 13px var(--fh);color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.svc{display:grid;gap:10px}
+.svc .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;border-top:1px solid var(--line);padding-top:10px}
+.svc .row:first-child{border-top:0;padding-top:0}
+.svc h3{font-size:.98rem}
+.svc .price{font:700 14px var(--fh);color:var(--head);text-align:right;white-space:nowrap}
+.svc .desc{grid-column:1/-1;color:var(--muted);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border-radius:8px;padding:3px 10px;font-size:13.5px;background:var(--soft);border:1px solid var(--line)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two h3{font-size:.95rem;margin-bottom:6px}
+ul.clean{margin:0;padding-left:18px}
+.faq details{border-top:1px solid var(--line);padding:10px 0}
+.faq details:first-child{border-top:0;padding-top:0}
+.faq summary{font:700 14.5px var(--fh);color:var(--head);cursor:pointer}
+.faq details p{margin:6px 0 0}
+.rail{position:sticky;top:16px;display:grid;gap:14px}
+.rail .sec{padding:18px}
+.hrs{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:14px}
+.askrow{margin-top:10px;font-size:13px;color:var(--ask-fg)}
+.callout{background:var(--soft);border-radius:14px;padding:14px;font-size:13.5px}
+.callout b{color:var(--head)}
+.actionbar{display:none}
+
+/* ---------- phone ---------- */
+@container (max-width:600px){
+  .page{padding:0 0 4px}
+  .hero{border-radius:0;border:0;border-bottom:1px solid var(--line)}
+  .cover{height:96px}
+  .cover span{font-size:11px}
+  .hbody{grid-template-columns:auto minmax(0,1fr);padding:0 16px 14px;gap:4px 12px}
+  .logo{width:64px;height:64px;margin-top:-32px;border-radius:16px;font-size:19px}
+  .hbody h1{font-size:1.3rem;padding-top:8px}
+  .sub{font-size:13.5px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-16px;padding-right:16px}
+  .chips::-webkit-scrollbar{display:none}
+  .ctas{display:none}
+  .glance{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:12px 0 0;padding:0 16px 4px;scrollbar-width:none}
+  .glance::-webkit-scrollbar{display:none}
+  .g{flex:0 0 62%;scroll-snap-align:start;padding:12px}
+  .tabs{display:flex;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--glass);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-top:12px;padding:0 8px;overflow-x:auto;scrollbar-width:none}
+  .tabs button{flex:1 0 auto;background:none;border:0;border-bottom:3px solid transparent;padding:12px 10px 9px;font:700 13.5px var(--fh);color:var(--muted);cursor:pointer}
+  .tabs button[aria-selected="true"]{color:var(--head);border-bottom-color:#9048F0}
+  .body{display:block;padding:12px 16px 0}
+  .main,.rail{display:grid;gap:12px;position:static}
+  .rail{margin-top:12px}
+  .sec,.rail .sec{padding:16px;border-radius:16px}
+  .sec h2{font-size:1.02rem}
+  .m-off{display:none}
+  .main:not(:has(.sec:not(.m-off))){display:none}
+  .rail:not(:has(> :not(.m-off))){display:none;margin-top:0}
+  .two{grid-template-columns:1fr}
+  .kv,.kv.narrow{grid-template-columns:1fr;gap:0}
+  .kv dd{margin-bottom:10px}
+  .actionbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;position:sticky;bottom:0;z-index:6;background:var(--glass);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));margin-top:16px}
+  .actionbar a,.actionbar button{display:grid;justify-items:center;gap:2px;background:none;border:0;color:var(--head);text-decoration:none;font:700 11.5px var(--fh);padding:6px 0;border-radius:12px;cursor:pointer}
+  .actionbar .ic{font-size:18px;line-height:1}
+  .actionbar .p{background:#9048F0;color:#fff}
+}
+</style>
+</head><body>
+
+<div class="outer">
+  <div class="note">
+    <b>Mockup:</b> an expanded My Aloha Map listing, filled in for Powered by ALOHA.
+    <span class="legend"><span class="src s-web">Website</span><span class="src s-g">Google</span><span class="src s-own">Owner call</span><span class="src s-ask">Ask on call</span></span>
+    <span class="tools">
+      <button class="toggle" id="phoneBtn" type="button" aria-pressed="false">Phone view</button>
+      <button class="toggle" id="srcBtn" type="button" aria-pressed="false">Public view</button>
+    </span>
+  </div>
+
+  <div class="wrap"><div class="page">
+    <div class="hero">
+      <div class="cover"><span>Cover photo from IG or the owner</span></div>
+      <div class="hbody">
+        <div class="logo" aria-hidden="true">PBA</div>
+        <h1>Powered by ALOHA</h1>
+        <div class="sub">Business systems for Las Vegas service businesses · Native Hawaiian owned</div>
+        <div class="chips">
+          <span class="chip v">✓ Verified: met the owner</span>
+          <span class="chip">Professional Services</span>
+          <span class="chip">Native Hawaiian owned</span>
+          <span class="chip">Free first call</span>
+          <span class="chip">Serves the whole valley</span>
+        </div>
+        <div class="ctas">
+          <a class="btn p" href="https://www.poweredbyaloha.com" target="_blank" rel="noopener">Book a call</a>
+          <a class="btn" href="https://www.poweredbyaloha.com" target="_blank" rel="noopener">Website</a>
+          <a class="btn" href="https://alohaapps.io" target="_blank" rel="noopener">ALOHA App</a>
+          <span class="btn">Share</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glance">
+      <div class="g"><div class="k">Best for</div><div class="v">Service businesses</div><div class="d">Salons, barbers, trainers, auto, home services <span class="src s-own">Owner</span></div></div>
+      <div class="g"><div class="k">Starts at</div><div class="v">$220 / month</div><div class="d">$2,200 if paid yearly <span class="src s-web">Web</span></div></div>
+      <div class="g"><div class="k">How to start</div><div class="v">20 min call</div><div class="d">Booked online <span class="src s-web">Web</span></div></div>
+      <div class="g"><div class="k">Replies within</div><div class="v"><span class="ask">Ask</span><span class="pubonly"></span></div><div class="d">Owner's own answer</div></div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Listing sections">
+      <button role="tab" data-t="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-t="services" aria-selected="false">Services</button>
+      <button role="tab" data-t="details" aria-selected="false">Details</button>
+      <button role="tab" data-t="contact" aria-selected="false">Contact</button>
+    </div>
+
+    <div class="body">
+      <div class="main">
+        <section class="sec" data-tab="overview">
+          <h2>The story <span class="src s-own">Owner call</span></h2>
+          <p>Powered by ALOHA was started by Kaj Movery, who's Native Hawaiian and works with local businesses in Las Vegas. It builds the systems that answer every lead fast, book the appointment, collect the payment, ask for the review and bring customers back, so the owner isn't the one doing it all by hand.</p>
+          <p>The team: Kaj (founder), Sarah Paikai (COO) and Josiah (systems builder).</p>
+          <p class="askonly"><span class="ask">Ask: year started, which island the family's from, and the story behind the name</span></p>
+        </section>
+
+        <section class="sec" data-tab="overview">
+          <h2>Is it a fit? <span class="src s-own">Owner call</span></h2>
+          <div class="two">
+            <div><h3>Great fit</h3><ul class="clean">
+              <li>Every customer has a name and phone number</li>
+              <li>Customers come back or refer friends</li>
+              <li>Doing at least $48K a year</li>
+              <li>Uses Vagaro, Booksy or a paper book</li></ul></div>
+            <div><h3>Not the right fit</h3><ul class="clean">
+              <li>Restaurants and food trucks</li>
+              <li>Realtors (your brokerage CRM covers it)</li>
+              <li>Retail shops</li></ul></div>
+          </div>
+        </section>
+
+        <section class="sec" data-tab="overview">
+          <h2>In the community <span class="src s-own">Owner call</span></h2>
+          <div class="tags">
+            <span class="tag">My Aloha Town (nonprofit partner)</span>
+            <span class="tag">Aloha Professional Network</span>
+            <span class="tag">Spirit of Aloha events</span>
+          </div>
+          <p class="askonly" style="margin-top:10px"><span class="ask">Ask: hiring? interns? causes or teams you support?</span></p>
+        </section>
+
+        <section class="sec" data-tab="services">
+          <h2>Services and pricing <span class="src s-web">Website</span></h2>
+          <div class="svc">
+            <div class="row"><h3>ALOHA App</h3><div class="price">$220/mo</div>
+              <div class="desc">Texts back every missed call, tracks payments, and runs the review, repeat-customer and referral follow-ups. Annual plan $2,200.</div></div>
+            <div class="row"><h3>ALOHA Dash</h3><div class="price"><span class="ask">Ask</span></div>
+              <div class="desc">Dashboards installed in your business so you can see the key numbers and make decisions faster.</div></div>
+            <div class="row"><h3>Growth partnership</h3><div class="price">Quoted on call</div>
+              <div class="desc">A deeper build for businesses doing $1M to $5M a year where the owner is the bottleneck.</div></div>
+          </div>
+        </section>
+
+        <section class="sec" data-tab="services">
+          <h2>Proof <span class="src s-web">Website</span></h2>
+          <p>Client stories on the ALOHA App site from Las Vegas owners: Julie Galeng (direct sales), Chante Hobbes (aesthetician) and Maki Pitolo (trainer).</p>
+          <p>Videos: the Powered by ALOHA YouTube channel walks through each system.</p>
+          <p class="askonly"><span class="ask">Ask: press, awards, certifications, and permission to quote a client</span></p>
+        </section>
+
+        <section class="sec" data-tab="details">
+          <h2>Details</h2>
+          <dl class="kv">
+            <dt>Payment</dt><dd><span class="ask">Ask: card, ACH, Venmo, Zelle?</span></dd>
+            <dt>Contracts</dt><dd><span class="ask">Ask: monthly or locked in? cancellation policy</span></dd>
+            <dt>Setup time</dt><dd><span class="ask">Ask: how long until it's live</span></dd>
+            <dt>Meets</dt><dd>Online <span class="src s-own">Owner</span> <span class="ask">Ask: in person too?</span></dd>
+            <dt>Languages</dt><dd><span class="ask">Ask</span></dd>
+            <dt>Discounts</dt><dd><span class="ask">Ask: kūpuna, military, nonprofits?</span></dd>
+            <dt>Business entity</dt><dd>Aloha Las Vegas LLC <span class="src s-own">Owner</span></dd>
+          </dl>
+        </section>
+
+        <section class="sec faq" data-tab="details">
+          <h2>Questions people ask <span class="src s-own">Owner call</span></h2>
+          <details open><summary>Do I need to be good with tech?</summary><p>No. The team sets it up in your account and walks you through it.</p></details>
+          <details><summary>I already use Vagaro. Do I still need this?</summary><p>Booking apps ask for reviews inside the app, which doesn't help you on Google Maps. This sends people to Google.</p></details>
+          <details class="askonly"><summary>What happens on the first call?</summary><p><span class="ask">Ask the owner to describe it in their own words</span></p></details>
+        </section>
+      </div>
+
+      <aside class="rail">
+        <div class="sec" data-tab="contact">
+          <h2>Contact</h2>
+          <dl class="kv narrow">
+            <dt>Website</dt><dd><a href="https://www.poweredbyaloha.com" target="_blank" rel="noopener">poweredbyaloha.com</a> <span class="src s-web">Web</span></dd>
+            <dt>Email</dt><dd>team@alohalasvegas.org <span class="src s-own">Owner</span></dd>
+            <dt>Phone</dt><dd><span class="ask">Ask: which number customers use</span></dd>
+            <dt>Social</dt><dd>YouTube <span class="src s-web">Web</span> <span class="ask">IG?</span></dd>
+          </dl>
+        </div>
+        <div class="sec" data-tab="contact">
+          <h2>Hours</h2>
+          <div class="hrs"><span>Mon to Fri</span><span><span class="ask">Ask</span></span><span>Sat, Sun</span><span><span class="ask">Ask</span></span></div>
+          <div class="askrow">Ask: after-hours calls? holiday closures?</div>
+        </div>
+        <div class="sec" data-tab="contact">
+          <h2>Location</h2>
+          <p style="margin:0">Serves the whole Las Vegas valley <span class="src s-own">Owner</span></p>
+          <div class="askrow">Ask: office address or remote only? parking? accessible?</div>
+        </div>
+        <div class="callout" data-tab="contact"><b>Owner?</b> This listing is free. Book a 20 min call to check it and get Verified.</div>
+      </aside>
+    </div>
+
+    <nav class="actionbar" aria-label="Quick actions">
+      <a class="p" href="https://www.poweredbyaloha.com" target="_blank" rel="noopener"><span class="ic">📅</span>Book</a>
+      <a href="https://www.poweredbyaloha.com" target="_blank" rel="noopener"><span class="ic">🌐</span>Website</a>
+      <button type="button" data-go="contact"><span class="ic">✉️</span>Contact</button>
+      <button type="button"><span class="ic">↗</span>Share</button>
+    </nav>
+  </div></div>
+</div>
+
+<script>
+const tabs=[...document.querySelectorAll('.tabs [data-t]')];
+function show(t){
+  tabs.forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  document.querySelectorAll('.wrap [data-tab]').forEach(s=>s.classList.toggle('m-off',s.dataset.tab!==t));
+}
+tabs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.t)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.go);document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})}));
+show('overview');
+function flip(id,cls){const b=document.getElementById(id);b.addEventListener('click',()=>{const on=document.body.classList.toggle(cls);b.setAttribute('aria-pressed',on)})}
+flip('phoneBtn','phone');flip('srcBtn','public');
+</script>
+</body></html>
